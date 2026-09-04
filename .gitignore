@@ -426,4 +426,9 @@ FodyWeavers.xsd
 *.msi
 *.msix
 *.msm
-*.msp
+*.msp
+
+# Project documentation (local only)
+backend.md
+frontend.md
+Index.md
