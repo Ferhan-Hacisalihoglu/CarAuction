@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./CarAuction.Backend
+      dockerfile: Dockerfile
+    container_name: carauction_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=carauction_db;Username=postgres;Password=your_strong_password
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__SecretKey=your_super_secret_jwt_key_at_least_64_characters_long_123456
+      - Jwt__Issuer=CarAuction
+      - Jwt__Audience=CarAuction
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - carauction_network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: carauction_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: carauction_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_strong_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d carauction_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - carauction_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: carauction_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - carauction_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  carauction_network:
+    driver: bridge
