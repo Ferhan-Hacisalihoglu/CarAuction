@@ -433,3 +433,10 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# project documentation
+
+backend.md
+frontend.md
+Index.md
+rules.md
