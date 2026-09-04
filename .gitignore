@@ -428,7 +428,7 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# Project documentation (local only)
+# Project documentation files (Local-only, do not commit to GitHub)
 backend.md
 frontend.md
 Index.md
