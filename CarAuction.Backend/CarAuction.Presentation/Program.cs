@@ -35,8 +35,28 @@ builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>()
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
-// Add SignalR
-builder.Services.AddSignalR();
+// Add SignalR with Redis backplane for horizontal scaling
+var redisConnString = builder.Configuration.GetConnectionString("Redis") 
+    ?? builder.Configuration["ConnectionStrings:Redis"] 
+    ?? "localhost:6379";
+
+var signalRBuilder = builder.Services.AddSignalR();
+try
+{
+    signalRBuilder.AddStackExchangeRedis(redisConnString, options =>
+    {
+        options.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal("CarAuction");
+        options.Configuration.AbortOnConnectFail = false;
+        options.Configuration.ConnectTimeout = 2000;
+    });
+}
+catch
+{
+    // Graceful fallback to default in-memory SignalR if Redis is not reachable
+}
+
+// Add health checks
+builder.Services.AddAppHealthChecks(builder.Configuration);
 
 // Add background services
 builder.Services.AddHostedService<AuctionExpiryWorker>();
@@ -162,5 +182,8 @@ app.MapControllers();
 // SignalR Hubs
 app.MapHub<AuctionHub>("/hubs/auction");
 app.MapHub<ChatHub>("/hubs/chat");
+
+// Health Check
+app.MapHealthChecks("/health");
 
 app.Run();

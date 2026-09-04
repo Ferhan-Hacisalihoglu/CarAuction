@@ -160,4 +160,53 @@ public class RedisCacheService : ICacheService
         DateTime? expireAt = expiry.HasValue ? DateTime.UtcNow.Add(expiry.Value) : null;
         _memoryFallback[key] = (value, expireAt);
     }
+
+    public async Task RemoveByPrefixAsync(string prefix)
+    {
+        try
+        {
+            if (_redis != null && _redis.IsConnected)
+            {
+                var db = _redis.GetDatabase();
+                foreach (var endpoint in _redis.GetEndPoints())
+                {
+                    var server = _redis.GetServer(endpoint);
+                    if (server.IsConnected && !server.IsReplica)
+                    {
+                        var keys = server.Keys(pattern: $"{prefix}*").ToArray();
+                        if (keys.Length > 0)
+                        {
+                            await db.KeyDeleteAsync(keys);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Redis error deleting keys with prefix {Prefix}, falling back to memory", prefix);
+        }
+
+        var matchingKeys = _memoryFallback.Keys.Where(k => k.StartsWith(prefix)).ToList();
+        foreach (var k in matchingKeys)
+        {
+            _memoryFallback.TryRemove(k, out _);
+        }
+    }
+
+    public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiry = null)
+    {
+        var cached = await GetAsync<T>(key);
+        if (cached != null)
+        {
+            return cached;
+        }
+
+        var result = await factory();
+        if (result != null)
+        {
+            await SetAsync(key, result, expiry);
+        }
+        return result;
+    }
 }

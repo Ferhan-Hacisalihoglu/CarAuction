@@ -45,19 +45,34 @@ public class AuctionExpiryWorker : BackgroundService
     private async Task CheckAndExpireAuctionsAsync(CancellationToken stoppingToken)
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
-        var connectionFactory = scope.ServiceProvider.GetRequiredService<IConnectionFactory>();
-        var cacheService = scope.ServiceProvider.GetService<ICacheService>();
-        var notificationService = scope.ServiceProvider.GetService<INotificationService>();
-        var userRepository = scope.ServiceProvider.GetService<IUserRepository>();
+        var lockService = scope.ServiceProvider.GetService<IDistributedLockService>();
 
-        await using var connection = await connectionFactory.CreateConnectionAsync();
+        IAsyncDisposable? workerLock = null;
+        if (lockService != null)
+        {
+            workerLock = await lockService.AcquireLockAsync("auction:expiry-worker", TimeSpan.Zero, TimeSpan.FromSeconds(10));
+            if (workerLock == null)
+            {
+                // Another node is actively running the expiry checks
+                return;
+            }
+        }
 
-        // Find expired auctions
-        await using var selectCommand = new NpgsqlCommand(
-            @"SELECT a.id, a.listing_id, a.current_price, a.winner_user_id
-              FROM auctions a
-              INNER JOIN listings l ON a.listing_id = l.id
-              WHERE a.end_time <= NOW() AND a.status = 'active'", connection);
+        try
+        {
+            var connectionFactory = scope.ServiceProvider.GetRequiredService<IConnectionFactory>();
+            var cacheService = scope.ServiceProvider.GetService<ICacheService>();
+            var notificationService = scope.ServiceProvider.GetService<INotificationService>();
+            var userRepository = scope.ServiceProvider.GetService<IUserRepository>();
+
+            await using var connection = await connectionFactory.CreateConnectionAsync();
+
+            // Find expired auctions
+            await using var selectCommand = new NpgsqlCommand(
+                @"SELECT a.id, a.listing_id, a.current_price, a.winner_user_id
+                  FROM auctions a
+                  INNER JOIN listings l ON a.listing_id = l.id
+                  WHERE a.end_time <= NOW() AND a.status = 'active'", connection);
 
         await using var reader = await selectCommand.ExecuteReaderAsync();
         var expiredAuctions = new List<(int Id, int ListingId, decimal CurrentPrice, int? WinnerUserId)>();
@@ -120,6 +135,9 @@ public class AuctionExpiryWorker : BackgroundService
                 if (cacheService != null)
                 {
                     await cacheService.RemoveAsync($"auction:{auction.Id}:state");
+                    await cacheService.RemoveAsync("auctions:active");
+                    await cacheService.RemoveByPrefixAsync("listings:catalog");
+                    await cacheService.RemoveAsync($"listing:{auction.ListingId}");
                 }
 
                 // Broadcast AuctionEnded event via SignalR Hub
@@ -145,6 +163,14 @@ public class AuctionExpiryWorker : BackgroundService
             {
                 await transaction.RollbackAsync(stoppingToken);
                 _logger.LogError(ex, "Error processing expired auction {AuctionId}", auction.Id);
+            }
+        }
+        }
+        finally
+        {
+            if (workerLock != null)
+            {
+                await workerLock.DisposeAsync();
             }
         }
     }

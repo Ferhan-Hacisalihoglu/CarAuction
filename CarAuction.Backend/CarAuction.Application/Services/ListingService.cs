@@ -23,17 +23,21 @@ public class ListingService : IListingService
         // Validate pagination parameters
         var page = Math.Max(1, filters.Page);
         var limit = Math.Clamp(filters.Limit, 1, 100);
+        var cacheKey = $"listings:catalog:p{page}:l{limit}:q{filters.Search}:s{filters.Status}:min{filters.MinPrice}:max{filters.MaxPrice}:auc{filters.IsAuction}";
 
-        var (listings, total) = await _listingRepository.GetPaginatedAsync(filters with { Page = page, Limit = limit });
-        var totalPages = (int)Math.Ceiling((double)total / limit);
+        return await _cacheService.GetOrSetAsync(cacheKey, async () =>
+        {
+            var (listings, total) = await _listingRepository.GetPaginatedAsync(filters with { Page = page, Limit = limit });
+            var totalPages = (int)Math.Ceiling((double)total / limit);
 
-        return new PaginatedResponse<ListingListItemResponse>(
-            listings.Select(MapToListItem).ToList(),
-            total,
-            filters.Page,
-            filters.Limit,
-            totalPages
-        );
+            return new PaginatedResponse<ListingListItemResponse>(
+                listings.Select(MapToListItem).ToList(),
+                total,
+                filters.Page,
+                filters.Limit,
+                totalPages
+            );
+        }, TimeSpan.FromSeconds(60));
     }
 
     public async Task<ListingDetailResponse?> GetByIdAsync(int id)
@@ -86,6 +90,7 @@ public class ListingService : IListingService
             };
 
             await _listingRepository.CreateAuctionAsync(auction);
+            await _cacheService.RemoveAsync("auctions:active");
         }
 
         var createdListing = await _listingRepository.GetByIdWithImagesAsync(listingId);
@@ -96,6 +101,8 @@ public class ListingService : IListingService
 
         var response = MapToDetailResponse(createdListing);
         await _cacheService.SetAsync($"listing:{listingId}", response, TimeSpan.FromMinutes(10));
+        await _cacheService.RemoveByPrefixAsync("listings:catalog");
+
         return response;
     }
 
@@ -129,6 +136,8 @@ public class ListingService : IListingService
         var response = MapToDetailResponse(updatedListing);
         // Invalidate and update Redis cache
         await _cacheService.SetAsync($"listing:{id}", response, TimeSpan.FromMinutes(10));
+        await _cacheService.RemoveByPrefixAsync("listings:catalog");
+        await _cacheService.RemoveAsync("auctions:active");
 
         return response;
     }
@@ -151,6 +160,8 @@ public class ListingService : IListingService
 
         // Invalidate Redis cache
         await _cacheService.RemoveAsync($"listing:{id}");
+        await _cacheService.RemoveByPrefixAsync("listings:catalog");
+        await _cacheService.RemoveAsync("auctions:active");
     }
 
     public async Task<List<ListingListItemResponse>> GetMyListingsAsync(int userId)

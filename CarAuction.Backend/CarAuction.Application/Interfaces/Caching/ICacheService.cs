@@ -8,4 +8,6 @@ public interface ICacheService
     Task<bool> ExistsAsync(string key);
     Task<string?> GetStringAsync(string key);
     Task SetStringAsync(string key, string value, TimeSpan? expiry = null);
+    Task RemoveByPrefixAsync(string prefix);
+    Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiry = null);
 }

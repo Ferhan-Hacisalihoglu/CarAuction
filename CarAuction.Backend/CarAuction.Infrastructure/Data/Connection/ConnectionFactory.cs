@@ -5,6 +5,7 @@ namespace CarAuction.Infrastructure.Data.Connection;
 public interface IConnectionFactory
 {
     Task<NpgsqlConnection> CreateConnectionAsync();
+    Task<bool> CanConnectAsync();
 }
 
 public class ConnectionFactory : IConnectionFactory
@@ -20,5 +21,20 @@ public class ConnectionFactory : IConnectionFactory
     public async Task<NpgsqlConnection> CreateConnectionAsync()
     {
         return await _dataSource.OpenConnectionAsync();
+    }
+
+    public async Task<bool> CanConnectAsync()
+    {
+        try
+        {
+            await using var conn = await _dataSource.OpenConnectionAsync();
+            await using var cmd = new NpgsqlCommand("SELECT 1", conn);
+            await cmd.ExecuteScalarAsync();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

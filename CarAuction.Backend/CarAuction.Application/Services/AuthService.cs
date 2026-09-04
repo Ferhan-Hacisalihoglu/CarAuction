@@ -119,6 +119,7 @@ public class AuthService : IAuthService
 
         // Store session in Redis
         await _cacheService.SetStringAsync($"session:{user.Id}", refreshToken, TimeSpan.FromDays(7));
+        await _cacheService.RemoveAsync($"blacklist:user:{user.Id}");
 
         // Build response
         return new AuthResponse(
@@ -190,22 +191,29 @@ public class AuthService : IAuthService
     {
         await _userRepository.ClearRefreshTokenAsync(userId);
         await _cacheService.RemoveAsync($"session:{userId}");
+        await _cacheService.RemoveAsync($"user:{userId}:profile_dto");
+        await _cacheService.RemoveAsync($"user:{userId}:profile");
+        // Blacklist user token immediately in Redis for 2 hours (covers access token lifespan)
+        await _cacheService.SetStringAsync($"blacklist:user:{userId}", "logged_out", TimeSpan.FromHours(2));
     }
 
     public async Task<UserDto?> GetCurrentUserAsync(int userId)
     {
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
+        return await _cacheService.GetOrSetAsync($"user:{userId}:profile_dto", async () =>
         {
-            return null;
-        }
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                return null!;
+            }
 
-        return new UserDto(
-            user.Id,
-            user.FirstName,
-            user.LastName,
-            user.Email,
-            user.Role?.Name
-        );
+            return new UserDto(
+                user.Id,
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                user.Role?.Name
+            );
+        }, TimeSpan.FromMinutes(15));
     }
 }

@@ -44,6 +44,7 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddSingleton<ICacheService, RedisCacheService>();
+        services.AddSingleton<IDistributedLockService, RedisDistributedLockService>();
 
         // Register Notification Service (SignalR Real-Time Broadcaster)
         services.AddScoped<INotificationService, NotificationService>();
@@ -107,7 +108,7 @@ public static class ServiceCollectionExtensions
                 ClockSkew = TimeSpan.Zero
             };
 
-            // Support JWT access token from query string for SignalR WebSocket connections
+            // Support JWT access token from query string for SignalR WebSocket connections and validate Redis blacklist
             options.Events = new JwtBearerEvents
             {
                 OnMessageReceived = context =>
@@ -119,9 +120,37 @@ public static class ServiceCollectionExtensions
                         context.Token = accessToken;
                     }
                     return Task.CompletedTask;
+                },
+                OnTokenValidated = async context =>
+                {
+                    var cacheService = context.HttpContext.RequestServices.GetService<ICacheService>();
+                    if (cacheService != null)
+                    {
+                        var userIdClaim = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                        if (!string.IsNullOrEmpty(userIdClaim))
+                        {
+                            var isBlacklisted = await cacheService.ExistsAsync($"blacklist:user:{userIdClaim}");
+                            if (isBlacklisted)
+                            {
+                                context.Fail("User session has been revoked or terminated.");
+                            }
+                        }
+                    }
                 }
             };
         });
+
+        return services;
+    }
+
+    public static IServiceCollection AddAppHealthChecks(this IServiceCollection services, IConfiguration configuration)
+    {
+        var redisConnString = configuration.GetConnectionString("Redis") 
+            ?? configuration["ConnectionStrings:Redis"] 
+            ?? "localhost:6379";
+
+        services.AddHealthChecks()
+            .AddRedis(redisConnString, name: "redis", tags: new[] { "ready", "cache" });
 
         return services;
     }

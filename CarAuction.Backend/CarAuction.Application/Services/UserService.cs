@@ -1,4 +1,5 @@
 using CarAuction.Application.DTOs.Users;
+using CarAuction.Application.Interfaces.Caching;
 using CarAuction.Application.Interfaces.Repositories;
 using CarAuction.Application.Interfaces.Services;
 using CarAuction.Domain.Entities;
@@ -8,10 +9,12 @@ namespace CarAuction.Application.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly ICacheService _cacheService;
 
-    public UserService(IUserRepository userRepository)
+    public UserService(IUserRepository userRepository, ICacheService cacheService)
     {
         _userRepository = userRepository;
+        _cacheService = cacheService;
     }
 
     public async Task<PaginatedResponse<UserListResponse>> GetAllAsync(int page, int limit)
@@ -34,13 +37,11 @@ public class UserService : IUserService
 
     public async Task<UserListResponse?> GetByIdAsync(int id)
     {
-        var user = await _userRepository.GetByIdAsync(id);
-        if (user == null)
+        return await _cacheService.GetOrSetAsync($"user:{id}:profile", async () =>
         {
-            return null;
-        }
-
-        return MapToListResponse(user);
+            var user = await _userRepository.GetByIdAsync(id);
+            return user != null ? MapToListResponse(user) : null!;
+        }, TimeSpan.FromMinutes(15));
     }
 
     public async Task<UserListResponse> UpdateProfileAsync(int userId, UpdateProfileRequest request)
@@ -60,6 +61,8 @@ public class UserService : IUserService
             throw new KeyNotFoundException($"User with ID {userId} not found after update");
         }
 
+        await _cacheService.RemoveAsync($"user:{userId}:profile");
+
         return MapToListResponse(user);
     }
 
@@ -78,6 +81,19 @@ public class UserService : IUserService
         if (user == null)
         {
             throw new KeyNotFoundException($"User with ID {id} not found after status update");
+        }
+
+        await _cacheService.RemoveAsync($"user:{id}:profile");
+
+        // If deactivated, blacklist user instantly in Redis to revoke existing JWT access tokens
+        if (!request.IsActive)
+        {
+            await _cacheService.SetStringAsync($"blacklist:user:{id}", "deactivated", TimeSpan.FromDays(7));
+            await _cacheService.RemoveAsync($"session:{id}");
+        }
+        else
+        {
+            await _cacheService.RemoveAsync($"blacklist:user:{id}");
         }
 
         return MapToListResponse(user);
@@ -106,6 +122,10 @@ public class UserService : IUserService
         {
             throw new KeyNotFoundException($"User with ID {id} not found after role update");
         }
+
+        await _cacheService.RemoveAsync($"user:{id}:profile");
+        // Blacklist old tokens so user must re-authenticate with new role claims
+        await _cacheService.SetStringAsync($"blacklist:user:{id}", "role_changed", TimeSpan.FromHours(2));
 
         return MapToListResponse(user);
     }
