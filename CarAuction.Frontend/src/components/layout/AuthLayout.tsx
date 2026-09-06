@@ -29,11 +29,6 @@ export function AuthLayout() {
         <Outlet />
       </div>
 
-      {/* Footer link */}
-      <p className="mt-8 text-center text-xs text-muted-foreground z-10">
-        Strict Docker-First Isolated Platform · Real-time SignalR WebSocket Enabled
-      </p>
-
       <ToastContainer />
     </div>
   );

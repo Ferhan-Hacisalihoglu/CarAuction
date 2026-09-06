@@ -87,7 +87,7 @@ export function ProfilePage() {
           Personal Profile & Security
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-          Manage your personal details, email credentials, and cryptographic security.
+          Manage your personal details, email credentials, and account security.
         </p>
       </div>
 

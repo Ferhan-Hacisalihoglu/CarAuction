@@ -111,7 +111,7 @@ export function GroupDetailPage() {
             </span>
             <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>SignalR Chat Backplane Active</span>
+              <span>Live Chat Active</span>
             </span>
           </div>
 

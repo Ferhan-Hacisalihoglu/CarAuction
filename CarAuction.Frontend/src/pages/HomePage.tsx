@@ -105,7 +105,7 @@ export function HomePage() {
             </div>
             <h3 className="text-lg font-bold text-foreground">Sub-Second Live Bidding</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Powered by ASP.NET Core SignalR WebSockets and Redis backplane with built-in anti-sniping protection that automatically extends countdowns on late bids.
+              Experience real-time interactive auction bidding with automatic anti-sniping protection that extends countdowns on late bids.
             </p>
           </div>
 
@@ -115,7 +115,7 @@ export function HomePage() {
             </div>
             <h3 className="text-lg font-bold text-foreground">Verified Ownership & Security</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              HMAC-SHA512 cryptographic salt authentication with automated refresh token rotation and pure parameterized ADO.NET SQL transactions.
+              Verified seller profiles, trusted vehicle history, and secure account protection ensuring peace of mind on every transaction.
             </p>
           </div>
 

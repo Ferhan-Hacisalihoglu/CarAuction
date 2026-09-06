@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Car, ShieldCheck, Zap, Server } from 'lucide-react';
+import { Car, ShieldCheck, Zap, MessageSquare } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -17,14 +17,14 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              The premier platform for high-performance vehicles, classic collectors, and live real-time auctions powered by .NET 8, PostgreSQL, Redis, and SignalR.
+              The premier platform for high-performance vehicles, classic collectors, and live real-time auctions.
             </p>
             <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span>All Systems Operational (Dockerized)</span>
+              <span>All Systems Operational</span>
             </div>
           </div>
 
@@ -82,7 +82,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Platform Tech */}
+          {/* Platform Features */}
           <div className="space-y-3">
             <h4 className="text-sm font-bold text-foreground tracking-wider uppercase">Platform Features</h4>
             <div className="space-y-2 text-xs text-muted-foreground">
@@ -92,11 +92,11 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                <span>HMAC-SHA512 auth with token rotation</span>
+                <span>Verified seller profiles & secure accounts</span>
               </div>
               <div className="flex items-center gap-2">
-                <Server className="h-4 w-4 text-blue-400" />
-                <span>PostgreSQL 16 & Redis 7 container cluster</span>
+                <MessageSquare className="h-4 w-4 text-blue-400" />
+                <span>Direct 1-on-1 chat & enthusiast clubs</span>
               </div>
             </div>
           </div>
@@ -104,9 +104,6 @@ export function Footer() {
 
         <div className="mt-10 border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} CarAuction Platform. All rights reserved.</p>
-          <p className="mt-2 sm:mt-0 font-mono text-[11px]">
-            Strict Docker-First Isolated Architecture
-          </p>
         </div>
       </div>
     </footer>
