@@ -149,7 +149,7 @@ The backend exposes **10 REST API controllers**:
 
 ### Prerequisites
 
-- [Docker Desktop]([https://www.docker.com/products/docker-dockerbox/](https://docs.docker.com/get-started/get-docker/))
+- [Docker Desktop](https://www.docker.com/products/docker-dockerbox/](https://docs.docker.com/get-started/get-docker/)
 - Windows, macOS, or Linux operating system
 
 ### Quick Start
