@@ -180,7 +180,13 @@ public class ListingService : IListingService
             listing.Price,
             listing.IsAuction,
             listing.Status,
-            listing.CreatedAt
+            listing.CreatedAt,
+            listing.Images?.Select(img => new ImageResponse(
+                img.Id,
+                img.FileName ?? "unknown",
+                img.MimeType ?? "application/octet-stream",
+                img.UploadedAt
+            )).ToList() ?? new List<ImageResponse>()
         );
     }
 

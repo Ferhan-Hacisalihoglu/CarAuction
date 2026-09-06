@@ -15,7 +15,8 @@ public record AuctionListItemResponse(
     DateTime StartTime,
     DateTime EndTime,
     decimal MinBidIncrement,
-    string Status
+    string Status,
+    int? ImageId = null
 );
 
 public record AuctionDetailResponse(

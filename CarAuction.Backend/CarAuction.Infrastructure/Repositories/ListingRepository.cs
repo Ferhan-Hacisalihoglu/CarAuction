@@ -77,11 +77,15 @@ public class ListingRepository : IListingRepository
         command.Parameters.Add(new NpgsqlParameter("@offset", NpgsqlDbType.Integer) { Value = offset });
 
         var listings = new List<Listing>();
-        await using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        await using (var reader = await command.ExecuteReaderAsync())
         {
-            listings.Add(MapListing(reader));
+            while (await reader.ReadAsync())
+            {
+                listings.Add(MapListing(reader));
+            }
         }
+
+        await PopulateImagesForListingsAsync(listings, connection);
 
         return (listings, (int)total);
     }
@@ -216,13 +220,52 @@ public class ListingRepository : IListingRepository
         command.Parameters.Add(new NpgsqlParameter("@userId", NpgsqlDbType.Integer) { Value = userId });
 
         var listings = new List<Listing>();
-        await using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        await using (var reader = await command.ExecuteReaderAsync())
         {
-            listings.Add(MapListing(reader));
+            while (await reader.ReadAsync())
+            {
+                listings.Add(MapListing(reader));
+            }
         }
 
+        await PopulateImagesForListingsAsync(listings, connection);
+
         return listings;
+    }
+
+    private static async Task PopulateImagesForListingsAsync(List<Listing> listings, NpgsqlConnection connection)
+    {
+        if (listings.Count == 0) return;
+
+        var listingIds = listings.Select(l => l.Id).ToList();
+        await using var imgCommand = new NpgsqlCommand(
+            "SELECT id, listing_id, file_name, mime_type, uploaded_at FROM images WHERE listing_id = ANY(@ids) ORDER BY id ASC", connection);
+        imgCommand.Parameters.Add(new NpgsqlParameter("@ids", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = listingIds.ToArray() });
+        await using var imgReader = await imgCommand.ExecuteReaderAsync();
+        var imagesByListing = new Dictionary<int, List<Image>>();
+        while (await imgReader.ReadAsync())
+        {
+            var listingId = imgReader.GetInt32(1);
+            if (!imagesByListing.ContainsKey(listingId))
+            {
+                imagesByListing[listingId] = new List<Image>();
+            }
+            imagesByListing[listingId].Add(new Image
+            {
+                Id = imgReader.GetInt32(0),
+                ListingId = listingId,
+                FileName = imgReader.IsDBNull(2) ? null : imgReader.GetString(2),
+                MimeType = imgReader.IsDBNull(3) ? null : imgReader.GetString(3),
+                UploadedAt = imgReader.GetDateTime(4)
+            });
+        }
+        foreach (var listing in listings)
+        {
+            if (imagesByListing.TryGetValue(listing.Id, out var imgs))
+            {
+                listing.Images = imgs;
+            }
+        }
     }
 
     public async Task<List<Image>> GetImagesByListingIdAsync(int listingId)

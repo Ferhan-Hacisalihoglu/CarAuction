@@ -21,7 +21,8 @@ public class AuctionRepository : IAuctionRepository
         await using var command = new NpgsqlCommand(
             @"SELECT a.id, a.listing_id, l.title, l.description, l.user_id as seller_id,
                      a.starting_price, a.current_price, a.start_time, a.end_time,
-                     a.min_bid_increment, a.status
+                     a.min_bid_increment, a.status,
+                     (SELECT id FROM images WHERE listing_id = l.id ORDER BY id ASC LIMIT 1) as image_id
               FROM auctions a
               INNER JOIN listings l ON a.listing_id = l.id
               WHERE a.end_time > NOW() AND a.status = 'active'
@@ -237,6 +238,15 @@ public class AuctionRepository : IAuctionRepository
 
     private static AuctionListItemResponse MapAuctionListItem(NpgsqlDataReader reader)
     {
+        var imageIdOrdinal = -1;
+        try { imageIdOrdinal = reader.GetOrdinal("image_id"); } catch { }
+
+        int? imageId = null;
+        if (imageIdOrdinal >= 0 && !reader.IsDBNull(imageIdOrdinal))
+        {
+            imageId = reader.GetFieldValue<int>(imageIdOrdinal);
+        }
+
         return new AuctionListItemResponse(
             reader.GetFieldValue<int>(reader.GetOrdinal("id")),
             reader.GetFieldValue<int>(reader.GetOrdinal("listing_id")),
@@ -248,7 +258,8 @@ public class AuctionRepository : IAuctionRepository
             reader.GetFieldValue<DateTime>(reader.GetOrdinal("start_time")),
             reader.GetFieldValue<DateTime>(reader.GetOrdinal("end_time")),
             reader.GetFieldValue<decimal>(reader.GetOrdinal("min_bid_increment")),
-            reader.GetFieldValue<string>(reader.GetOrdinal("status"))
+            reader.GetFieldValue<string>(reader.GetOrdinal("status")),
+            imageId
         );
     }
 

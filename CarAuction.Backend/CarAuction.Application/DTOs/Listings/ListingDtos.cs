@@ -35,7 +35,8 @@ public record ListingListItemResponse(
     decimal Price,
     bool IsAuction,
     string Status,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    List<ImageResponse>? Images = null
 );
 
 public record ListingDetailResponse(

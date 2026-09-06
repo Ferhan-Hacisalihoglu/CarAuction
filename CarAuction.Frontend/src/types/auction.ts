@@ -11,6 +11,8 @@ export interface Auction {
   minBidIncrement: number;
   winnerUserId: number | null;
   status: 'active' | 'completed' | 'expired' | 'cancelled';
+  imageId?: number | null;
+  images?: import('./common').Image[];
 }
 
 export interface AuctionDetailResponse extends Auction {

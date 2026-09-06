@@ -6,18 +6,29 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Gavel, Car, ArrowUpRight } from 'lucide-react';
+import { imagesApi } from '@/api/images';
 
 export function AuctionCard({ auction }: { auction: Auction }) {
   const isCompleted = auction.status === 'completed' || auction.status === 'expired';
+  const imageId = auction.imageId || (auction.images && auction.images.length > 0 ? auction.images[0].id : null);
+  const mainImageUrl = imageId ? imagesApi.getImageUrl(imageId) : null;
 
   return (
     <Link to={`/auctions/${auction.id}`} className="group block">
       <Card className="overflow-hidden glass-card transition-all duration-300 hover:translate-y-[-4px] hover:shadow-xl hover:shadow-amber-500/10 border-white/10">
         {/* Banner Area */}
         <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted/40">
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-muted-foreground/30">
-            <Car className="h-16 w-16 group-hover:scale-105 transition-transform" />
-          </div>
+          {mainImageUrl ? (
+            <img
+              src={mainImageUrl}
+              alt={auction.title || `Auction Lot #${auction.id}`}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-muted-foreground/30">
+              <Car className="h-16 w-16 group-hover:scale-105 transition-transform" />
+            </div>
+          )}
 
           {/* Badges Overlay */}
           <div className="absolute top-3 left-3 flex items-center gap-1.5">
