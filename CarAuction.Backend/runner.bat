@@ -32,23 +32,6 @@ if /i "%ACTION%"=="logs" (
     goto :end
 )
 
-if /i "%ACTION%"=="seed" (
-    echo [*] Seeding CarAuction database with SeedData...
-    docker cp "%~dp0..\SeedData" carauction_postgres:/tmp/SeedData
-    docker cp "%~dp0seed.sql" carauction_postgres:/tmp/seed.sql
-    docker exec -i carauction_postgres psql -U postgres -d carauction_db -f /tmp/seed.sql
-    echo.
-    echo ===============================================================================
-    echo                     DATABASE SEEDED SUCCESSFULLY
-    echo ===============================================================================
-    echo   Admin Account:  admin@carauction.com  / Admin123^^!
-    echo   Seller Account: seller@carauction.com / Password123^^!
-    echo   Bidder Account: bidder@carauction.com / Password123^^!
-    echo   Collector:      collector@carauction.com / Password123^^!
-    echo ===============================================================================
-    goto :end
-)
-
 REM 1. Ensure shared docker network exists
 echo [*] Checking shared network: carauction_network...
 docker network inspect carauction_network >nul 2>&1

@@ -33,12 +33,6 @@ if /i "%ACTION%"=="restart" (
     goto :status
 )
 
-if /i "%ACTION%"=="seed" (
-    echo [*] Seeding CarAuction database with SeedData...
-    call "%~dp0CarAuction.Backend\runner.bat" seed
-    goto :end
-)
-
 REM Action: UP (Default)
 echo [*] Step 1/2: Launching Backend Services (API + PostgreSQL 16 + Redis 7)...
 call "%~dp0CarAuction.Backend\runner.bat" up
