@@ -78,21 +78,6 @@ export function HomePage() {
               <ArrowRight className="h-4 w-4" />
             </Button>
           </form>
-
-          {/* Quick Category Badges */}
-          <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
-            <span className="font-semibold">Popular Searches:</span>
-            {['Porsche 911', 'BMW M4', 'Mercedes AMG', 'Classic 60s', 'Electric Hypercars'].map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => navigate(`/listings?search=${encodeURIComponent(tag)}`)}
-                className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 hover:text-foreground transition-colors border border-white/5"
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
         </div>
       </section>
 
