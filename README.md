@@ -147,11 +147,6 @@ The backend exposes **10 REST API controllers**:
 
 ## 🛠️ Getting Started
 
-### Prerequisites
-
-- [Docker Desktop](https://www.docker.com/products/docker-dockerbox/](https://docs.docker.com/get-started/get-docker/)
-- Windows, macOS, or Linux operating system
-
 ### Quick Start
 
 The project includes convenient **runner.bat** scripts for one-click deployment.
@@ -316,12 +311,6 @@ CarAuction/
 - **SQL Injection Prevention**: All queries use parameterized commands
 - **CORS Configuration**: Strict origin policies
 - **Role-Based Access Control (RBAC)**: Dynamic permission system
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
