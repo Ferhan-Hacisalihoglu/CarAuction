@@ -10,7 +10,6 @@
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
 ![SignalR](https://img.shields.io/badge/SignalR-Real--time-FF6F00?logo=dotnet&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-104%20Passing-00C853?logo=check&logoColor=white)
 
 </div>
 
@@ -150,7 +149,7 @@ The backend exposes **10 REST API controllers**:
 
 ### Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-dockerbox/)
+- [Docker Desktop]([https://www.docker.com/products/docker-dockerbox/](https://docs.docker.com/get-started/get-docker/))
 - Windows, macOS, or Linux operating system
 
 ### Quick Start
@@ -212,19 +211,6 @@ runner.bat logs
 
 ---
 
-## 🔑 Demo Accounts
-
-After seeding the database, you can log in with these demo accounts:
-
-| Role | Email | Password |
-|---|---|---|
-| 🛡️ **Admin** | `admin@carauction.com` | `Admin123!` |
-| 🏎️ **Seller** | `seller@carauction.com` | `Password123!` |
-| 🏷️ **Bidder** | `bidder@carauction.com` | `Password123!` |
-| 🏆 **Collector** | `collector@carauction.com` | `Password123!` |
-
----
-
 ## 🧪 Testing
 
 The project includes **104 unit tests** written with xUnit, FakeItEasy, and FluentAssertions.
@@ -277,23 +263,6 @@ CarAuction.Infrastructure →  ADO.NET Data Access, Redis, Security
 - **Pessimistic Row Locking**: Critical operations like bid placement use `SELECT ... FOR UPDATE` to prevent race conditions.
 - **Redis Backplane**: SignalR uses Redis as a backplane to support multiple backend instances.
 - **Token Rotation**: Refresh tokens are rotated on each use with a 10-second grace period for parallel requests.
-
----
-
-## 📊 Project Status
-
-| Component | Status |
-|---|---|
-| Backend Architecture & API | ✅ Complete — 10 Controllers |
-| Database Schema & Migrations | ✅ Complete — 13 Tables |
-| Redis Caching | ✅ Complete |
-| SignalR Real-Time Hubs | ✅ Complete |
-| Background Workers | ✅ Complete — Auction expiry monitor |
-| Unit Tests | ✅ Complete — 104 tests, 100% passing |
-| Frontend Architecture | ✅ Complete — React 18, TypeScript, Vite |
-| Frontend Pages | ✅ Complete — 22 pages |
-| Docker Orchestration | ✅ Complete — Decoupled compose setups |
-| Database Seeding | ✅ Complete — 12 vehicles, demo data |
 
 ---
 
