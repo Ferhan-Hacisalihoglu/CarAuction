@@ -438,3 +438,7 @@ node_modules/
 dist/
 .vite/
 
+# Local seed data
+SeedData/
+
+

@@ -160,3 +160,20 @@ INSERT INTO permissions (name, description) VALUES
   ('listing.create', 'Ability to create vehicle listings'),
   ('admin.manage', 'Access to administrative panel and user moderation')
 ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO role_permissions (role_id, permission_id) VALUES
+  (1, 1), (1, 2), (1, 3),
+  (2, 1), (2, 2)
+ON CONFLICT DO NOTHING;
+
+-- Default Administrative User (Password: Admin123!)
+INSERT INTO users (id, first_name, last_name, email, password_hash, salt, role_id, is_active)
+VALUES
+  (1, 'Admin', 'System', 'admin@carauction.com',
+   'CnRQSDxWY6S+q8VlTv0ihy+zYx/wzuACgxJQc/XCfyX8OSmr4MJ2xIzNvCR+9Y1Le0eCgLgnj+T50EbeiqU0ZA==',
+   'dog/2eVcuZtfW7xBdBEVnCXWAb0uWcz40l3J0c4VkmCFYQnIsIfDEs72nMGP7jkab8qtfa8snkWf6cXm/rb4Ew==',
+   1, TRUE)
+ON CONFLICT (id) DO NOTHING;
+
+SELECT setval('users_id_seq', (SELECT GREATEST(MAX(id), 1) FROM users));
+
