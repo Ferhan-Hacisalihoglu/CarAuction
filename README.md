@@ -17,11 +17,10 @@
 
 ## 📸 Screenshots
 
-
+| | |
 |---|---|
 | ![Screenshot 1](https://github.com/user-attachments/assets/3a847b80-b706-4111-8876-7acef658bfcc) | ![Screenshot 2](https://github.com/user-attachments/assets/07a9dfe2-9360-4073-bf1b-7ab600ee06e2) |
 | ![Screenshot 3](https://github.com/user-attachments/assets/93ced7fb-35cd-4c4c-a81e-9d4059307f23) | ![Screenshot 4](https://github.com/user-attachments/assets/6c383262-d74e-4a49-87a6-256dfce2e0bb) |
-
 ---
 
 ## 🚀 What is CarAuction?
