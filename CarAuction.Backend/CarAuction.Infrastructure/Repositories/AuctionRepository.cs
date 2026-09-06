@@ -227,6 +227,14 @@ public class AuctionRepository : IAuctionRepository
         return count > 0;
     }
 
+    public async Task<long> CountActiveAsync()
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT COUNT(1) FROM auctions WHERE status = 'active' AND end_time > NOW()", connection);
+        return (long)(await command.ExecuteScalarAsync())!;
+    }
+
     private static AuctionListItemResponse MapAuctionListItem(NpgsqlDataReader reader)
     {
         return new AuctionListItemResponse(

@@ -14,7 +14,7 @@ services:
       - ASPNETCORE_URLS=http://+:5000
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=carauction_db;Username=postgres;Password=your_strong_password
       - ConnectionStrings__Redis=redis:6379
-      - Jwt__SecretKey=your_super_secret_jwt_key_at_least_64_characters_long_123456
+      - Jwt__SecretKey=your_super_secret_jwt_key_at_least_64_characters_long_1234567890
       - Jwt__Issuer=CarAuction
       - Jwt__Audience=CarAuction
     depends_on:
@@ -68,4 +68,5 @@ volumes:
 
 networks:
   carauction_network:
-    driver: bridge
+    name: carauction_network
+    external: true

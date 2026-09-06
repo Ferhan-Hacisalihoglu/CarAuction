@@ -33,7 +33,7 @@ public class UsersControllerTests
             2, 1, 10, 1
         );
 
-        A.CallTo(() => _userService.GetAllAsync(1, 10))
+        A.CallTo(() => _userService.GetAllAsync(1, 10, null))
             .Returns(expectedResponse);
 
         // Act
@@ -209,7 +209,7 @@ public class UsersControllerTests
             0, 1, 10, 0
         );
 
-        A.CallTo(() => _userService.GetAllAsync(1, 10))
+        A.CallTo(() => _userService.GetAllAsync(1, 10, null))
             .Returns(expectedResponse);
 
         // Act - pass invalid params (0 and -1)

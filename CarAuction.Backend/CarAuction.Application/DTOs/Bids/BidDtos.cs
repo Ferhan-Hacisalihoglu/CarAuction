@@ -14,6 +14,17 @@ public record OfferResponse(
     DateTime CreatedAt
 );
 
+public record OfferWithStatusResponse(
+    int Id,
+    int ListingId,
+    string ListingTitle,
+    int UserId,
+    string UserName,
+    decimal Amount,
+    string Status,
+    DateTime CreatedAt
+);
+
 public record MyBidResponse(
     int Id,
     int ListingId,
@@ -22,4 +33,8 @@ public record MyBidResponse(
     string ListingStatus,
     decimal Amount,
     DateTime CreatedAt
+);
+
+public record OfferStatusUpdateRequest(
+    string Status
 );

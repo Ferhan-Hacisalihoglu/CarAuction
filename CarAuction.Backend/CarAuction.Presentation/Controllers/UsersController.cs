@@ -20,9 +20,9 @@ public class UsersController : ControllerBase
     [HttpGet]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<PaginatedResponse<UserListResponse>>>> GetAll(
-        [FromQuery] int page = 1, [FromQuery] int limit = 10)
+        [FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] string? search = null)
     {
-        var result = await _userService.GetAllAsync(page, limit);
+        var result = await _userService.GetAllAsync(page, limit, search);
         return Ok(ApiResponse<PaginatedResponse<UserListResponse>>.SuccessResponse(result));
     }
 
@@ -64,6 +64,15 @@ public class UsersController : ControllerBase
     {
         var result = await _userService.UpdateRoleAsync(id, request);
         return Ok(ApiResponse<UserListResponse>.SuccessResponse(result, "Role updated successfully"));
+    }
+
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<object>>> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var userId = GetUserId();
+        await _userService.ChangePasswordAsync(userId, request);
+        return Ok(ApiResponse<object>.SuccessResponse(null!, "Password changed successfully"));
     }
 
     private int GetUserId()

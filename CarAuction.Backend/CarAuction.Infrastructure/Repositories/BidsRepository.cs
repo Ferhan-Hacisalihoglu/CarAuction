@@ -150,4 +150,74 @@ public class BidsRepository : IBidsRepository
             reader.GetFieldValue<DateTime>(reader.GetOrdinal("created_at"))
         );
     }
+
+    public async Task<long> CountRecentAsync(TimeSpan period)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT COUNT(1) FROM bids WHERE created_at > NOW() - @period", connection);
+        command.Parameters.Add(new NpgsqlParameter("@period", NpgsqlDbType.Interval) { Value = period });
+        return (long)(await command.ExecuteScalarAsync())!;
+    }
+
+    public async Task<List<BidInfo>> GetRecentAsync(int limit)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            @"SELECT b.id, b.listing_id, l.title as listing_title, b.amount, b.created_at
+              FROM bids b
+              INNER JOIN listings l ON b.listing_id = l.id
+              ORDER BY b.created_at DESC LIMIT @limit", connection);
+        command.Parameters.Add(new NpgsqlParameter("@limit", NpgsqlDbType.Integer) { Value = limit });
+
+        var bids = new List<BidInfo>();
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            bids.Add(new BidInfo(
+                reader.GetFieldValue<int>(reader.GetOrdinal("id")),
+                reader.GetFieldValue<int>(reader.GetOrdinal("listing_id")),
+                reader.GetFieldValue<string>(reader.GetOrdinal("listing_title")),
+                reader.GetFieldValue<decimal>(reader.GetOrdinal("amount")),
+                reader.GetFieldValue<DateTime>(reader.GetOrdinal("created_at"))
+            ));
+        }
+        return bids;
+    }
+
+    public async Task UpdateBidStatusAsync(int bidId, string status)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            "UPDATE bids SET status = @status WHERE id = @id", connection);
+        command.Parameters.Add(new NpgsqlParameter("@status", NpgsqlDbType.Varchar) { Value = status });
+        command.Parameters.Add(new NpgsqlParameter("@id", NpgsqlDbType.Integer) { Value = bidId });
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<int> GetListingIdByBidIdAsync(int bidId)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT listing_id FROM bids WHERE id = @id", connection);
+        command.Parameters.Add(new NpgsqlParameter("@id", NpgsqlDbType.Integer) { Value = bidId });
+        var result = await command.ExecuteScalarAsync();
+        return result == null || result == DBNull.Value ? 0 : (int)result;
+    }
+
+    public async Task<OfferResponse?> GetOfferByIdAsync(int id)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        return await GetOfferByIdAsync(connection, id);
+    }
+
+    public async Task<string?> GetBidStatusAsync(int bidId)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT status FROM bids WHERE id = @id", connection);
+        command.Parameters.Add(new NpgsqlParameter("@id", NpgsqlDbType.Integer) { Value = bidId });
+        var result = await command.ExecuteScalarAsync();
+        return result == null || result == DBNull.Value ? null : (string)result;
+    }
 }

@@ -282,4 +282,37 @@ public class ListingRepository : IListingRepository
             UpdatedAt = reader.IsDBNull(reader.GetOrdinal("updated_at")) ? null : reader.GetFieldValue<DateTime?>(reader.GetOrdinal("updated_at"))
         };
     }
+
+    public async Task<long> CountAsync()
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand("SELECT COUNT(1) FROM listings", connection);
+        return (long)(await command.ExecuteScalarAsync())!;
+    }
+
+    public async Task<long> CountByStatusAsync(string status)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT COUNT(1) FROM listings WHERE status = @status", connection);
+        command.Parameters.Add(new NpgsqlParameter("@status", NpgsqlDbType.Varchar) { Value = status });
+        return (long)(await command.ExecuteScalarAsync())!;
+    }
+
+    public async Task<List<Listing>> GetRecentAsync(int limit)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            @"SELECT id, user_id, title, description, price, is_auction, status, created_at, updated_at 
+              FROM listings ORDER BY created_at DESC LIMIT @limit", connection);
+        command.Parameters.Add(new NpgsqlParameter("@limit", NpgsqlDbType.Integer) { Value = limit });
+
+        var listings = new List<Listing>();
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            listings.Add(MapListing(reader));
+        }
+        return listings;
+    }
 }

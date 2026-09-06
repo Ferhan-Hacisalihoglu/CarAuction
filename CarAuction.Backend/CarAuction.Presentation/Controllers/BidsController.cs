@@ -45,6 +45,24 @@ public class BidsController : ControllerBase
         return Ok(ApiResponse<List<MyBidResponse>>.SuccessResponse(result));
     }
 
+    [HttpPost("offers/{id:int}/accept")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<OfferResponse>>> AcceptOffer(int id)
+    {
+        var userId = GetUserId();
+        var result = await _bidsService.AcceptOfferAsync(id, userId);
+        return Ok(ApiResponse<OfferResponse>.SuccessResponse(result, "Offer accepted successfully"));
+    }
+
+    [HttpPost("offers/{id:int}/reject")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<object>>> RejectOffer(int id)
+    {
+        var userId = GetUserId();
+        await _bidsService.RejectOfferAsync(id, userId);
+        return Ok(ApiResponse<object>.SuccessResponse(null!, "Offer rejected successfully"));
+    }
+
     private int GetUserId()
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;

@@ -432,3 +432,9 @@ FodyWeavers.xsd
 backend.md
 frontend.md
 Index.md
+
+# Frontend dependencies & build outputs
+node_modules/
+dist/
+.vite/
+

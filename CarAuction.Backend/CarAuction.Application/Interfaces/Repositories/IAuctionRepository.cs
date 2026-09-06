@@ -10,4 +10,5 @@ public interface IAuctionRepository
     Task<AuctionDetailResponse> PlaceBidWithTransactionAsync(int auctionId, int userId, decimal amount, string? idempotencyKey);
     Task<List<BidHistoryResponse>> GetBidHistoryAsync(int auctionId);
     Task<bool> IdempotencyKeyExistsAsync(string key);
+    Task<long> CountActiveAsync();
 }

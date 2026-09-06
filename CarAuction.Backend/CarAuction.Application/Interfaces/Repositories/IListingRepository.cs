@@ -16,4 +16,7 @@ public interface IListingRepository
     Task<List<Listing>> GetByUserIdAsync(int userId);
     Task<List<Image>> GetImagesByListingIdAsync(int listingId);
     Task AddImageAsync(Image image);
+    Task<long> CountAsync();
+    Task<long> CountByStatusAsync(string status);
+    Task<List<Listing>> GetRecentAsync(int limit);
 }

@@ -39,4 +39,43 @@ public class BidsService : IBidsService
     {
         return await _bidsRepository.GetMyBidsAsync(userId);
     }
+
+    public async Task<OfferResponse> AcceptOfferAsync(int offerId, int userId)
+    {
+        // Get the offer to find the listing
+        var listingId = await _bidsRepository.GetListingIdByBidIdAsync(offerId);
+        
+        // Verify the caller is the listing owner
+        if (!await _bidsRepository.IsListingOwnerAsync(listingId, userId))
+        {
+            throw new UnauthorizedAccessException("Only the listing owner can accept offers");
+        }
+
+        // Update the bid status to accepted
+        await _bidsRepository.UpdateBidStatusAsync(offerId, "accepted");
+
+        // Mark listing as sold
+        // Reject all other pending offers for this listing
+        var offers = await _bidsRepository.GetOffersByListingIdAsync(listingId);
+        foreach (var offer in offers.Where(o => o.Id != offerId))
+        {
+            await _bidsRepository.UpdateBidStatusAsync(offer.Id, "rejected");
+        }
+
+        // Return the updated offer
+        var updatedOffer = await _bidsRepository.GetOfferByIdAsync(offerId);
+        return updatedOffer ?? throw new InvalidOperationException("Offer not found after acceptance");
+    }
+
+    public async Task RejectOfferAsync(int offerId, int userId)
+    {
+        var listingId = await _bidsRepository.GetListingIdByBidIdAsync(offerId);
+        
+        if (!await _bidsRepository.IsListingOwnerAsync(listingId, userId))
+        {
+            throw new UnauthorizedAccessException("Only the listing owner can reject offers");
+        }
+
+        await _bidsRepository.UpdateBidStatusAsync(offerId, "rejected");
+    }
 }

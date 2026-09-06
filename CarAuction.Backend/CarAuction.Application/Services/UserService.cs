@@ -10,20 +10,50 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly ICacheService _cacheService;
+    private readonly IPasswordHasher _passwordHasher;
 
-    public UserService(IUserRepository userRepository, ICacheService cacheService)
+    public UserService(IUserRepository userRepository, ICacheService cacheService, IPasswordHasher passwordHasher)
     {
         _userRepository = userRepository;
         _cacheService = cacheService;
+        _passwordHasher = passwordHasher;
     }
 
-    public async Task<PaginatedResponse<UserListResponse>> GetAllAsync(int page, int limit)
+    public async Task ChangePasswordAsync(int userId, ChangePasswordRequest request)
+    {
+        // Verify current password
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with ID {userId} not found");
+        }
+
+        if (!_passwordHasher.VerifyPassword(request.CurrentPassword, user.Salt, user.PasswordHash))
+        {
+            throw new InvalidOperationException("Current password is incorrect");
+        }
+
+        // Generate new hash
+        var newSalt = _passwordHasher.GenerateSalt();
+        var newHash = _passwordHasher.HashPassword(request.NewPassword, newSalt);
+
+        // Update password
+        await _userRepository.UpdatePasswordAsync(userId, newHash, newSalt);
+
+        // Invalidate cache
+        await _cacheService.RemoveAsync($"user:{userId}:profile");
+
+        // Blacklist all tokens for this user so they re-authenticate with new password
+        await _cacheService.SetStringAsync($"blacklist:user:{userId}", "password_changed", TimeSpan.FromHours(2));
+    }
+
+    public async Task<PaginatedResponse<UserListResponse>> GetAllAsync(int page, int limit, string? search = null)
     {
         // Validate pagination parameters
         page = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 100);
 
-        var (users, total) = await _userRepository.GetPaginatedAsync(page, limit);
+        var (users, total) = await _userRepository.GetPaginatedAsync(page, limit, search);
         var totalPages = (int)Math.Ceiling((double)total / limit);
 
         return new PaginatedResponse<UserListResponse>(

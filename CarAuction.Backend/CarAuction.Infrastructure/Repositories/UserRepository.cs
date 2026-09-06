@@ -1,3 +1,4 @@
+using CarAuction.Application.DTOs.Bids;
 using CarAuction.Application.Interfaces.Repositories;
 using CarAuction.Domain.Entities;
 using CarAuction.Infrastructure.Data.Connection;
@@ -155,13 +156,20 @@ public class UserRepository : IUserRepository
         return (int)result;
     }
 
-    public async Task<(List<User> Users, int Total)> GetPaginatedAsync(int page, int limit)
+    public async Task<(List<User> Users, int Total)> GetPaginatedAsync(int page, int limit, string? search = null)
     {
         await using var connection = await _connectionFactory.CreateConnectionAsync();
         var offset = (page - 1) * limit;
 
+        var searchCondition = string.IsNullOrEmpty(search) ? "" : 
+            "WHERE (u.first_name ILIKE @search OR u.last_name ILIKE @search OR u.email ILIKE @search)";
+
         // Get total count
-        await using var countCommand = new NpgsqlCommand("SELECT COUNT(1) FROM users", connection);
+        await using var countCommand = new NpgsqlCommand($"SELECT COUNT(1) FROM users u {searchCondition}", connection);
+        if (!string.IsNullOrEmpty(search))
+        {
+            countCommand.Parameters.Add(new NpgsqlParameter("@search", NpgsqlDbType.Varchar) { Value = $"%{search}%" });
+        }
         var total = (long)(await countCommand.ExecuteScalarAsync())!;
 
         // Get paginated users
@@ -171,9 +179,14 @@ public class UserRepository : IUserRepository
                      r.name as role_name
               FROM users u 
               LEFT JOIN roles r ON u.role_id = r.id 
+              {searchCondition}
               ORDER BY u.created_at DESC 
               LIMIT @limit OFFSET @offset", connection);
 
+        if (!string.IsNullOrEmpty(search))
+        {
+            command.Parameters.Add(new NpgsqlParameter("@search", NpgsqlDbType.Varchar) { Value = $"%{search}%" });
+        }
         command.Parameters.Add(new NpgsqlParameter("@limit", NpgsqlDbType.Integer) { Value = limit });
         command.Parameters.Add(new NpgsqlParameter("@offset", NpgsqlDbType.Integer) { Value = offset });
 
@@ -224,6 +237,19 @@ public class UserRepository : IUserRepository
         await command.ExecuteNonQueryAsync();
     }
 
+    public async Task UpdatePasswordAsync(int userId, string newHash, string newSalt)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            @"UPDATE users SET password_hash = @passwordHash, salt = @salt WHERE id = @id", connection);
+
+        command.Parameters.Add(new NpgsqlParameter("@passwordHash", NpgsqlDbType.Varchar) { Value = newHash });
+        command.Parameters.Add(new NpgsqlParameter("@salt", NpgsqlDbType.Varchar) { Value = newSalt });
+        command.Parameters.Add(new NpgsqlParameter("@id", NpgsqlDbType.Integer) { Value = userId });
+
+        await command.ExecuteNonQueryAsync();
+    }
+
     public async Task<bool> RoleExistsAsync(int roleId)
     {
         await using var connection = await _connectionFactory.CreateConnectionAsync();
@@ -265,5 +291,53 @@ public class UserRepository : IUserRepository
         }
 
         return user;
+    }
+
+    public async Task<long> CountAsync()
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand("SELECT COUNT(1) FROM users", connection);
+        return (long)(await command.ExecuteScalarAsync())!;
+    }
+
+    public async Task<long> CountRecentAsync(TimeSpan period)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT COUNT(1) FROM users WHERE created_at > NOW() - @period", connection);
+        command.Parameters.Add(new NpgsqlParameter("@period", NpgsqlDbType.Interval) { Value = period });
+        return (long)(await command.ExecuteScalarAsync())!;
+    }
+
+    public async Task<List<User>> GetRecentAsync(int limit)
+    {
+        await using var connection = await _connectionFactory.CreateConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            @"SELECT id, first_name, last_name, email, password_hash, salt, 
+                     role_id, refresh_token, refresh_token_expiry, is_active, created_at
+              FROM users ORDER BY created_at DESC LIMIT @limit", connection);
+        command.Parameters.Add(new NpgsqlParameter("@limit", NpgsqlDbType.Integer) { Value = limit });
+
+        var users = new List<User>();
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var roleId = reader.IsDBNull(reader.GetOrdinal("role_id")) ? null : reader.GetFieldValue<int?>(reader.GetOrdinal("role_id"));
+            users.Add(new User
+            {
+                Id = reader.GetFieldValue<int>(reader.GetOrdinal("id")),
+                FirstName = reader.GetFieldValue<string>(reader.GetOrdinal("first_name")),
+                LastName = reader.GetFieldValue<string>(reader.GetOrdinal("last_name")),
+                Email = reader.GetFieldValue<string>(reader.GetOrdinal("email")),
+                PasswordHash = reader.GetFieldValue<string>(reader.GetOrdinal("password_hash")),
+                Salt = reader.GetFieldValue<string>(reader.GetOrdinal("salt")),
+                RoleId = roleId,
+                RefreshToken = reader.IsDBNull(reader.GetOrdinal("refresh_token")) ? null : reader.GetFieldValue<string>(reader.GetOrdinal("refresh_token")),
+                RefreshTokenExpiry = reader.IsDBNull(reader.GetOrdinal("refresh_token_expiry")) ? null : reader.GetFieldValue<DateTime?>(reader.GetOrdinal("refresh_token_expiry")),
+                IsActive = reader.GetFieldValue<bool>(reader.GetOrdinal("is_active")),
+                CreatedAt = reader.GetFieldValue<DateTime>(reader.GetOrdinal("created_at"))
+            });
+        }
+        return users;
     }
 }

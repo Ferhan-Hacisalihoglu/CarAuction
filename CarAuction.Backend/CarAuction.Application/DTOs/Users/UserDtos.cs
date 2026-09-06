@@ -13,6 +13,11 @@ public record UpdateUserRoleRequest(
     int RoleId
 );
 
+public record ChangePasswordRequest(
+    string CurrentPassword,
+    string NewPassword
+);
+
 public record UserListResponse(
     int Id,
     string FirstName,
