@@ -17,10 +17,10 @@
 
 ## 📸 Screenshots
 
-<img width="1919" height="3438" alt="Screenshot 2026-09-06 at 17-55-49 CarAuction — Premium Vehicle Marketplace   Live Auctions" src="https://github.com/user-attachments/assets/3a847b80-b706-4111-8876-7acef658bfcc" />
-<img width="1919" height="2023" alt="Screenshot 2026-09-06 at 17-55-56 CarAuction — Premium Vehicle Marketplace   Live Auctions" src="https://github.com/user-attachments/assets/07a9dfe2-9360-4073-bf1b-7ab600ee06e2" />
-<img width="1919" height="1445" alt="Screenshot 2026-09-06 at 17-56-07 CarAuction — Premium Vehicle Marketplace   Live Auctions" src="https://github.com/user-attachments/assets/93ced7fb-35cd-4c4c-a81e-9d4059307f23" />
-<img width="1919" height="1329" alt="Screenshot 2026-09-06 at 18-01-27 CarAuction — Premium Vehicle Marketplace   Live Auctions" src="https://github.com/user-attachments/assets/6c383262-d74e-4a49-87a6-256dfce2e0bb" />
+
+|---|---|
+| ![Screenshot 1](https://github.com/user-attachments/assets/3a847b80-b706-4111-8876-7acef658bfcc) | ![Screenshot 2](https://github.com/user-attachments/assets/07a9dfe2-9360-4073-bf1b-7ab600ee06e2) |
+| ![Screenshot 3](https://github.com/user-attachments/assets/93ced7fb-35cd-4c4c-a81e-9d4059307f23) | ![Screenshot 4](https://github.com/user-attachments/assets/6c383262-d74e-4a49-87a6-256dfce2e0bb) |
 
 ---
 
